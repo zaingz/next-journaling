@@ -12,7 +12,7 @@ export default function Home() {
         </p>
         <div>
           <Link href="/journal">
-            <button className="bg-orange-500 px-4 py-2 rounded-lg text-md">
+            <button className="bg-blue-700 px-4 py-2 rounded-lg text-md">
               Get Started
             </button>
           </Link>
