@@ -1,3 +1,4 @@
+import EntryCard from "@/components/EntryCard";
 import NewEntry from "@/components/NewEntry";
 import { getUserByClerkId } from "@/utils/auth";
 import { prisma } from "@/utils/db";
@@ -23,7 +24,9 @@ export default async function JournalPage() {
           </div>
           <div className="grid grid-cols-3 gap-4">
             <NewEntry />
-            
+            {userJournalEntries.map((entry) => (
+                <EntryCard key = {entry.id} entry={entry}/>
+            ))}
           </div>
         </div>
       )
