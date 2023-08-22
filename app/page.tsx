@@ -1,7 +1,11 @@
+import { auth } from '@clerk/nextjs'
 import Image from 'next/image'
 import Link from 'next/link'
 
-export default function Home() {
+export default async function Home() {
+  const { userId } = await auth()
+  const href = userId ? '/journal' : 'new-user'
+
   return (
     <div className="w-screen h-screen bg-slate-800 flex justify-center items-center text-slate-100">
       <div className="w-full max-w-[720px] mx-auto">
@@ -11,7 +15,7 @@ export default function Home() {
           journaling and uncover the trends using AI
         </p>
         <div>
-          <Link href="/journal">
+          <Link href={href}>
             <button className="bg-blue-700 px-4 py-2 rounded-lg text-md">
               Get Started
             </button>
