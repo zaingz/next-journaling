@@ -1,4 +1,3 @@
-import { Prisma } from "@prisma/client"
 
 export default function EntryCard({ entry }) {
     const date = new Date(entry.createdAt).toDateString()
