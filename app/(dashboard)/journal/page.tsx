@@ -13,6 +13,9 @@ const getUserJournalEntries = async () => {
     orderBy: {
       createdAt: 'desc',
     },
+    include:{
+        analysis: true
+    }
   })
 }
 
