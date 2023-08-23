@@ -2,6 +2,10 @@ import { OpenAI } from 'langchain/llms/openai'
 import { StructuredOutputParser } from 'langchain/output_parsers'
 import z from 'zod'
 import { PromptTemplate } from 'langchain/prompts'
+import { Document } from 'langchain/document'
+import { loadQARefineChain } from 'langchain/chains'
+import { OpenAIEmbeddings } from 'langchain/embeddings/openai'
+import { MemoryVectorStore } from 'langchain/vectorstores/memory'
 
 const parser = StructuredOutputParser.fromZodSchema(
   z.object({
@@ -50,4 +54,53 @@ export const analyze = async (content) => {
   } catch (e) {
     console.log(e)
   }
+}
+
+export const qa = async (question, entries) => {
+  const docs = entries.map((entry) => {
+    return new Document({
+      pageContent: entry.content,
+      metadata: { id: entry.id, createdAt: entry.createdAt },
+    })
+  })
+
+const questionPromptTemplateString = `Context information is below.
+  ---------------------
+  {context}
+  ---------------------
+  Given the context information and no prior knowledge, answer the question: {question}`;
+  
+  const questionPrompt = new PromptTemplate({
+    inputVariables: ["context", "question"],
+    template: questionPromptTemplateString,
+  });
+  
+  const refinePromptTemplateString = `You are an AI assistant in a journaling app and help Users to get the answers based on their past journal entries.
+  The original question is as follows: {question}
+  We have provided an existing answer: {existing_answer}
+  We have the opportunity to refine the existing answer
+  (only if needed) with some more context below.
+  ------------
+  {context}
+  ------------
+  Given the new context, refine the original answer to better answer the question.
+  You must provide a response, either original answer or refined answer. Make sure the final answer is human friendly tone. There shouldn't be any details about context`;
+  
+  const refinePrompt = new PromptTemplate({
+    inputVariables: ["question", "existing_answer", "context"],
+    template: refinePromptTemplateString,
+  });
+  
+  const model = new OpenAI({ temperature: 0.3, modelName: 'gpt-3.5-turbo' })
+  const chain = loadQARefineChain(model, {questionPrompt, refinePrompt, verbose: false})
+  const embeddings = new OpenAIEmbeddings()
+  const store = await MemoryVectorStore.fromDocuments(docs, embeddings)
+  const relavantDocs = await store.similaritySearch(question)
+  const res = await chain.call({
+    prompt: refinePrompt.format,
+    input_documents: relavantDocs,
+    question,
+  })
+
+  return res.output_text
 }
